@@ -7,12 +7,18 @@ class CryptoData(BaseModel):
     symbol: str
     name: str
     current_price: float
-    market_cap: int
-    market_cap_rank: int
-    total_volume: int
-    price_change_percentage_24h: Optional[float]
-    price_change_percentage_7d: Optional[float]
-    price_change_percentage_30d: Optional[float]
+    market_cap: Optional[int] = 0  # Can be null in free tier
+    market_cap_rank: Optional[int] = 0
+    total_volume: Optional[int] = 0
+    
+    # These might not be available in free tier
+    price_change_percentage_24h: Optional[float] = None
+    price_change_percentage_7d: Optional[float] = None
+    price_change_percentage_30d: Optional[float] = None
+    
+    # Additional safety fields
+    image: Optional[str] = None  # Coin image URL
+    last_updated: Optional[str] = None  # When data was last updated
 
 class AnalysisState(BaseModel):
     crypto_data: List[CryptoData] = []
@@ -20,12 +26,17 @@ class AnalysisState(BaseModel):
     report_path: Optional[str] = None
     insights: List[str] = []
     timestamp: datetime = datetime.now()
+    
+    # Track data quality for free tier
+    data_source: str = "free_tier"
+    has_price_changes: bool = False
 
 class AnalysisRequest(BaseModel):
-    num_coins: int = 10
+    num_coins: int = 10  # Keep conservative for free tier
     vs_currency: str = "usd"
 
 class AnalysisResponse(BaseModel):
     status: str
     message: str
     data: Optional[Dict[str, Any]] = None
+    warnings: List[str] = []  # For free tier limitations
