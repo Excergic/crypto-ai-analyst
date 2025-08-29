@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+import os
+from fastapi.responses import FileResponse
 
 from .agents.langgraph_workflow import crypto_workflow
 from .models.schemas import AnalysisRequest, AnalysisResponse
@@ -52,6 +54,32 @@ async def run_analysis(request: AnalysisRequest):
     except Exception as e:
         logger.error(f"❌ Analysis failed: {e}")
         raise HTTPException(status_code=500, detail=f"Analysis error: {str(e)}")
+
+@app.get("/download/report/{filename}")
+async def download_report(filename: str):
+    """Download generated Excel report"""
+    file_path = f"reports/{filename}"
+    if os.path.exists(file_path):
+        return FileResponse(
+            path=file_path,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            filename=filename
+        )
+    else:
+        raise HTTPException(status_code=404, detail="File not found")
+
+@app.get("/download/chart/{filename}")
+async def download_chart(filename: str):
+    """Download generated chart"""
+    file_path = f"reports/charts/{filename}"
+    if os.path.exists(file_path):
+        return FileResponse(
+            path=file_path,
+            media_type="image/png",
+            filename=filename
+        )
+    else:
+        raise HTTPException(status_code=404, detail="Chart not found")
 
 @app.get("/health")
 async def health_check():
